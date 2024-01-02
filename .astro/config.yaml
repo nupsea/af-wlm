@@ -1,6 +1,6 @@
 postgres:
-  port: "5432"
+  port: "5435"
 project:
   name: af-271
 webserver:
-  port: "8080"
+  port: "8087"

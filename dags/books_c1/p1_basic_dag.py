@@ -1,18 +1,13 @@
 from airflow import DAG
 from datetime import datetime, timedelta
-from airflow.models import Variable
 from airflow.operators.python import PythonOperator
 
 
-def _fetch():
+def process():
     """
     Function invoked by the PythonOperator.
-    Reads a variable (JSON) defined in the Airflow Admin Console and prints it.
     """
-    novels = Variable.get("novels_data_source", deserialize_json=True)
-    novels_id = novels["id"]
-    novels_file_path = novels["file_path"]
-    print(f"Novels ID: {novels_id} Path: {novels_file_path}")
+    print(f"Processing Novels pipeline..")
 
 
 with DAG(
@@ -33,7 +28,7 @@ with DAG(
     # Defines a Python Operator task
     fetch_novels = PythonOperator(
         task_id="novels",
-        python_callable=_fetch
+        python_callable=process
     )
 
 

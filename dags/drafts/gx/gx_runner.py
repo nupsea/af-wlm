@@ -11,12 +11,14 @@ def main():
     }
 
     gx_manager = GxManager(
-        args
+        args,
+        # engine="spark"
     )
 
     asset_name = "player_log"
     s3_prefix = "ares/vimond/player_log_event/silver/v0_0.0.0_1/meta_physical_partition_valid=valid/meta_physical_partition_date=2020-08-21/"
-    regex = "meta_physical_partition_hh=\\d{2}/"
+    # test # s3_prefix = "ares/vimond/player_log_event/silver/v0_0.0.0_1/meta_physical_partition_valid=valid/meta_physical_partition_date=2020-08-18/meta_physical_partition_hh=05/part-00000-6054130e-8aad-42d6-b27c-82f0d909acbb.c000.snappy.parquet"
+    regex = "meta_physical_partition_hh=\\d{2}/.*.parquet"
 
     data_asset = gx_manager.add_parquet_asset(asset_name, s3_prefix, regex)
 

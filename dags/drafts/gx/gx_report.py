@@ -3,10 +3,11 @@ from pyspark.sql import SparkSession
 
 
 class GxManager:
-    def __init__(self, params):
-        self.context = gx.get_context()
+    def __init__(self, params, engine="pandas"):
         self.params = params or {}
-        self._setup_spark()
+        self.engine = engine
+
+        self.context = gx.get_context()
         self.datasource = self._setup_datasource()
 
     def _setup_datasource(self):
@@ -14,11 +15,21 @@ class GxManager:
         if any(ds["name"] == datasource_name for ds in self.context.list_datasources()):
             self.context.delete_datasource(datasource_name)
 
-        datasource = self.context.sources.add_spark_s3(
-            name=datasource_name,
-            bucket=self.params["bucket_name"],
-            spark_config=self.spark_config
-        )
+        datasource = None
+        if self.engine == "spark":
+            self._setup_spark()
+
+            datasource = self.context.sources.add_spark_s3(
+                name=datasource_name,
+                bucket=self.params["bucket_name"],
+                spark_config=self.spark_config
+            )
+        else:
+            datasource = self.context.sources.add_pandas_s3(
+                name=datasource_name,
+                bucket=self.params["bucket_name"]
+            )
+
         return datasource
 
     def _setup_spark(self):

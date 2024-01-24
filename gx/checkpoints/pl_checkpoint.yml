@@ -1,0 +1,38 @@
+name: pl_checkpoint
+config_version: 1.0
+template_name:
+module_name: great_expectations.checkpoint
+class_name: Checkpoint
+run_name_template:
+expectation_suite_name:
+batch_request: {}
+action_list:
+  - name: store_validation_result
+    action:
+      class_name: StoreValidationResultAction
+  - name: store_evaluation_params
+    action:
+      class_name: StoreEvaluationParametersAction
+  - name: update_data_docs
+    action:
+      class_name: UpdateDataDocsAction
+  - name: send_slack_notification
+    action:
+      class_name: SlackNotificationAction
+      slack_webhook: ${slack_webhook_url}
+      notify_on: all
+      renderer:
+        module_name: great_expectations.render.renderer.slack_renderer
+        class_name: SlackRenderer
+evaluation_parameters: {}
+runtime_configuration: {}
+validations:
+  - batch_request:
+      datasource_name: sample_s3_ds
+      data_asset_name: player_log
+      options: {}
+      batch_slice:
+    expectation_suite_name: pl_suite
+profilers: []
+ge_cloud_id:
+expectation_suite_ge_cloud_id:

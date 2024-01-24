@@ -27,7 +27,7 @@ class GxOperator(BaseOperator):
         expectations = [
             ExpectationConfiguration(
                 expectation_type="expect_column_values_to_be_in_set",
-                kwargs={"column": "tenant", "value_set": ["aresi"]},
+                kwargs={"column": "tenant", "value_set": ["ares"]},
             ),
             ExpectationConfiguration(
                 expectation_type="expect_column_values_to_not_be_null",
@@ -43,8 +43,7 @@ class GxOperator(BaseOperator):
 
         gx_manager.create_or_update_expectation_suite("pl_suite", expectations)
 
-        pl_batch_request = data_asset.build_batch_request()
-        checkpoint_result = gx_manager.run_checkpoint("pl_checkpoint", pl_batch_request, "pl_suite")
+        checkpoint_result = gx_manager.run_checkpoint("pl_checkpoint")
         print(f"CHECKPOINT Result: \n {checkpoint_result}")
 
         gx_manager.build_data_docs()

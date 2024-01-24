@@ -12,10 +12,7 @@ class GxManager:
 
     def _setup_datasource(self):
         datasource_name = self.params["datasource_name"]
-        if any(ds["name"] == datasource_name for ds in self.context.list_datasources()):
-            self.context.delete_datasource(datasource_name)
 
-        datasource = None
         if self.engine == "spark":
             self._setup_spark()
 
@@ -25,7 +22,7 @@ class GxManager:
                 spark_config=self.spark_config
             )
         else:
-            datasource = self.context.sources.add_pandas_s3(
+            datasource = self.context.sources.add_or_update_pandas_s3(
                 name=datasource_name,
                 bucket=self.params["bucket_name"]
             )
@@ -63,23 +60,13 @@ class GxManager:
         return asset.get_batch_list_from_batch_request(batch_request)
 
     def create_or_update_expectation_suite(self, suite_name, expectations):
-        if suite_name in [suite.expectation_suite_name for suite in self.context.list_expectation_suites()]:
-            self.context.delete_expectation_suite(suite_name)
-        suite = self.context.add_expectation_suite(suite_name)
+        suite = self.context.add_or_update_expectation_suite(suite_name)
         for expectation in expectations:
             suite.add_expectation(expectation)
         self.context.update_expectation_suite(expectation_suite=suite)
 
-    def run_checkpoint(self, checkpoint_name, batch_request, suite_name):
-        checkpoint = self.context.add_or_update_checkpoint(
-            name=checkpoint_name,
-            validations=[
-                {
-                    "batch_request": batch_request,
-                    "expectation_suite_name": suite_name,
-                },
-            ],
-        )
+    def run_checkpoint(self, checkpoint_name):
+        checkpoint = self.get_checkpoint(checkpoint_name)
         return checkpoint.run()
 
     def build_data_docs(self):

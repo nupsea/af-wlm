@@ -14,24 +14,6 @@ config_version: 3.0
 # Read more at https://docs.greatexpectations.io/docs/guides/connecting_to_your_data/connect_to_data_overview
 datasources: {}
 
-# This config file supports variable substitution which enables: 1) keeping
-# secrets out of source control & 2) environment-based configuration changes
-# such as staging vs prod.
-#
-# When GX encounters substitution syntax (like `my_key: ${my_value}` or
-# `my_key: $my_value`) in the great_expectations.yml file, it will attempt
-# to replace the value of `my_key` with the value from an environment
-# variable `my_value` or a corresponding key read from this config file,
-# which is defined through the `config_variables_file_path`.
-# Environment variables take precedence over variables defined here.
-#
-# Substitution values defined here can be a simple (non-nested) value,
-# nested value such as a dictionary, or an environment variable (i.e. ${ENV_VAR})
-#
-#
-# https://docs.greatexpectations.io/docs/guides/setup/configuring_data_contexts/how_to_configure_credentials
-
-
 config_variables_file_path: uncommitted/config_variables.yml
 
 # The plugins_directory will be added to your python path for custom modules
@@ -84,64 +66,82 @@ data_docs_sites:
   # include Expectations, Validations & Profiles. The are built for all
   # Datasources from JSON artifacts in the local repo including validations &
   # profiles from the uncommitted directory. Read more at https://docs.greatexpectations.io/docs/terms/data_docs
-#  local_site:
-#    class_name: SiteBuilder
-#    show_how_to_buttons: true
-#    store_backend:
-#      class_name: TupleFilesystemStoreBackend
-#      base_directory: uncommitted/data_docs/local_site/
-#    site_index_builder:
-#      class_name: DefaultSiteIndexBuilder
-  s3_site:
+  local_site:
     class_name: SiteBuilder
+    show_how_to_buttons: true
     store_backend:
-      class_name: TupleS3StoreBackend
-      bucket: kayodatalake-dev-landing  # Replace with your S3 bucket name
-      prefix: source=datalake/name=gx/version=v1  # Replace with the desired path in your bucket
+      class_name: TupleFilesystemStoreBackend
+      base_directory: uncommitted/data_docs/local_site/
     site_index_builder:
       class_name: DefaultSiteIndexBuilder
+      validation_results_limit: 20
+
+
+#  s3_site:
+#    class_name: SiteBuilder
+#    store_backend:
+#      class_name: TupleS3StoreBackend
+#      bucket: kayodatalake-dev-landing  # Replace with your S3 bucket name
+#      prefix: source=datalake/name=gx/version=v1  # Replace with the desired path in your bucket
+#    site_index_builder:
+#      class_name: DefaultSiteIndexBuilder
 
 anonymous_usage_statistics:
   data_context_id: dab99caf-13a3-44e0-b412-f9d3b3a30110
   enabled: true
 fluent_datasources:
-  sample_s3_ds2:
-    type: spark_s3
-    bucket: kayodatalake-dev-landing
-  sample_s3_ds3:
-    type: spark_s3
-    bucket: kayodatalake-dev-landing
-  sample_s3_ds4:
-    type: spark_s3
-    bucket: kayodatalake-dev-landing
-  sample_s3_ds5:
+  s3_sourcing_binge_vimond:
     type: spark_s3
     assets:
       player_log:
         type: parquet
-        connect_options:
-          s3_prefix: ares/source=vimond/name=player_log_event/version=v1/meta_physical_partition_date=2020-08-18/meta_physical_partition_hh=05/
-          s3_recursive_file_discovery: true
-    bucket: kayodatalake-dev-landing
-  sample_s3_ds6:
-    type: spark_s3
-    assets:
-      player_log:
-        type: parquet
-        connect_options:
-          s3_prefix: ares/source=vimond/name=player_log_event/version=v1/meta_physical_partition_date=2020-08-18/meta_physical_partition_hh=05/
-          s3_recursive_file_discovery: true
-    bucket: kayodatalake-dev-landing
-  sample_s3_ds:
-    type: pandas_s3
-    assets:
-      player_log:
-        type: parquet
-        batching_regex: meta_physical_partition_hh=\d{2}/.*.parquet
+        batching_regex: meta_physical_partition_hh=\d{2}/
         connect_options:
           s3_prefix: ares/vimond/player_log_event/silver/v0_0.0.0_1/meta_physical_partition_valid=valid/meta_physical_partition_date=2020-08-21/
           s3_recursive_file_discovery: true
+    spark_config:
+      spark.hadoop.fs.s3a.acl.default: BucketOwnerFullControl
+      spark.hadoop.fs.s3.impl: org.apache.hadoop.fs.s3a.S3AFileSystem
+      fs.s3a.aws.credentials.provider: com.amazonaws.auth.profile.ProfileCredentialsProvider
+      spark.hadoop.hive.metastore.client.factory.class: com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory
+      spark.sql.sources.partitionOverwriteMode: dynamic
     bucket: kayodatalake-dev-sourcing
+  s3_sourcing_zuora_delta:
+    type: spark_s3
+    assets:
+      account:
+        type: parquet
+        batching_regex: meta_physical_partition_date=\d{4}-\d{2}-\d{2}/meta_physical_partition_hh=\d{2}/
+        connect_options:
+          s3_prefix: zuora_aqua_obj_delta/account/silver/v1_0.0.8283_1/meta_physical_partition_valid=valid/
+          s3_recursive_file_discovery: true
+    spark_config:
+      spark.hadoop.fs.s3a.acl.default: BucketOwnerFullControl
+      spark.hadoop.fs.s3.impl: org.apache.hadoop.fs.s3a.S3AFileSystem
+      fs.s3a.aws.credentials.provider: com.amazonaws.auth.profile.ProfileCredentialsProvider
+      spark.hadoop.hive.metastore.client.factory.class: com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory
+      spark.sql.sources.partitionOverwriteMode: dynamic
+    bucket: kayodatalake-dev-sourcing
+  my_awsathena_datasource:
+    type: sql
+    assets:
+      zuora_aqua_obj_delta_account_v1:
+        type: table
+        order_by: []
+        batch_metadata: {}
+        table_name: zuora_aqua_obj_delta_account_v1
+        schema_name:
+    connection_string: awsathena+rest://@athena.ap-southeast-2.amazonaws.com:443/kayo_temp?s3_staging_dir=s3://aws-athena-query-results-294530054210-dev/
+  athena_sourcing:
+    type: sql
+    assets:
+      ares_vimond_player_log:
+        type: table
+        order_by: []
+        batch_metadata: {}
+        table_name: ares_vimond_player_log
+        schema_name:
+    connection_string: awsathena+rest://@athena.ap-southeast-2.amazonaws.com:443/kayo_temp?s3_staging_dir=s3://aws-athena-query-results-294530054210-dev/
 notebooks:
 include_rendered_content:
   globally: false

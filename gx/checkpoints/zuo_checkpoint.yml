@@ -1,4 +1,4 @@
-name: pl_checkpoint
+name: zuo_checkpoint
 config_version: 1.0
 template_name:
 module_name: great_expectations.checkpoint
@@ -20,11 +20,12 @@ evaluation_parameters: {}
 runtime_configuration: {}
 validations:
   - batch_request:
-      datasource_name: athena_sourcing
-      data_asset_name: ares_vimond_player_log
-      options: {}
+      datasource_name: s3_sourcing_zuora_delta
+      data_asset_name: account
+      options:
+        path: zuora_aqua_obj_delta/account/silver/v1_0.0.8283_1/meta_physical_partition_valid=valid/meta_physical_partition_date=2024-01-24/meta_physical_partition_hh=00/
       batch_slice:
-    expectation_suite_name: pl_suite
+    expectation_suite_name: zuo_suite
 profilers: []
 ge_cloud_id:
 expectation_suite_ge_cloud_id:

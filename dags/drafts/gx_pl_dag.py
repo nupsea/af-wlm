@@ -15,7 +15,7 @@ MY_GX_DATA_CONTEXT = "include/great_expectations"
     schedule=None,
     catchup=False,
 )
-def gx_exec():
+def gx_pl_exec():
 
     start = EmptyOperator(task_id="start")
 
@@ -32,17 +32,20 @@ def gx_exec():
     gx_validate = GxOperator(
         task_id="gx_validate",
         params={
-            "datasource_name": "sample_s3_ds",
+            "datasource_name": "s3_sourcing_binge_vimond",
             "bucket_name": "kayodatalake-dev-sourcing",
             "options": {"region": "ap-southeast-2"},
             "asset_name": "player_log",
             "s3_prefix": "ares/vimond/player_log_event/silver/v0_0.0.0_1/meta_physical_partition_valid=valid/meta_physical_partition_date=2020-08-21/",
-            "regex": "meta_physical_partition_hh=\\d{2}/.*.parquet"
-        },
+            "regex": "meta_physical_partition_hh=\\d{2}/",
+            # "regex": "meta_physical_partition_hh=\\d{2}/.*.parquet",
+            "checkpoint": "pl_checkpoint",
+            "suite": "pl_suite"
+        }
     )
 
     complete = EmptyOperator(task_id="end")
     start >> gx_validate >> complete
 
 
-gx_exec()
+gx_pl_exec()

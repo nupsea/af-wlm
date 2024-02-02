@@ -91,20 +91,14 @@ anonymous_usage_statistics:
   enabled: true
 fluent_datasources:
   s3_sourcing_binge_vimond:
-    type: spark_s3
+    type: pandas_s3
     assets:
       player_log:
         type: parquet
-        batching_regex: meta_physical_partition_hh=\d{2}/
+        batching_regex: meta_physical_partition_hh=\d{2}/.*.parquet
         connect_options:
           s3_prefix: ares/vimond/player_log_event/silver/v0_0.0.0_1/meta_physical_partition_valid=valid/meta_physical_partition_date=2020-08-21/
           s3_recursive_file_discovery: true
-    spark_config:
-      spark.hadoop.fs.s3a.acl.default: BucketOwnerFullControl
-      spark.hadoop.fs.s3.impl: org.apache.hadoop.fs.s3a.S3AFileSystem
-      fs.s3a.aws.credentials.provider: com.amazonaws.auth.profile.ProfileCredentialsProvider
-      spark.hadoop.hive.metastore.client.factory.class: com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory
-      spark.sql.sources.partitionOverwriteMode: dynamic
     bucket: kayodatalake-dev-sourcing
   s3_sourcing_zuora_delta:
     type: spark_s3
@@ -122,7 +116,7 @@ fluent_datasources:
       spark.hadoop.hive.metastore.client.factory.class: com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory
       spark.sql.sources.partitionOverwriteMode: dynamic
     bucket: kayodatalake-dev-sourcing
-  my_awsathena_datasource:
+  athena_sourcing:
     type: sql
     assets:
       zuora_aqua_obj_delta_account_v1:
@@ -130,16 +124,6 @@ fluent_datasources:
         order_by: []
         batch_metadata: {}
         table_name: zuora_aqua_obj_delta_account_v1
-        schema_name:
-    connection_string: awsathena+rest://@athena.ap-southeast-2.amazonaws.com:443/kayo_temp?s3_staging_dir=s3://aws-athena-query-results-294530054210-dev/
-  athena_sourcing:
-    type: sql
-    assets:
-      ares_vimond_player_log:
-        type: table
-        order_by: []
-        batch_metadata: {}
-        table_name: ares_vimond_player_log
         schema_name:
     connection_string: awsathena+rest://@athena.ap-southeast-2.amazonaws.com:443/kayo_temp?s3_staging_dir=s3://aws-athena-query-results-294530054210-dev/
 notebooks:

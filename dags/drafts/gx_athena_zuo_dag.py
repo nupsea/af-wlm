@@ -12,7 +12,7 @@ MY_GX_DATA_CONTEXT = "include/great_expectations"
     schedule=None,
     catchup=False,
 )
-def gx_zuo_exec():
+def gx_athena_zuo_exec():
 
     start = EmptyOperator(task_id="start")
 
@@ -20,15 +20,14 @@ def gx_zuo_exec():
     gx_validate = GxOperator(
         task_id="zuo_validate",
         params={
-            "datasource_name": "s3_sourcing_zuora_delta",
-            "bucket_name": "kayodatalake-dev-sourcing",
-            "options": {"region": "ap-southeast-2"},
-            "asset_name": "account",
-            "s3_prefix": "zuora_aqua_obj_delta/account/silver/v1_0.0.8283_1/meta_physical_partition_valid=valid/",
-            "regex": "meta_physical_partition_date=\\d{4}-\\d{2}-\\d{2}/meta_physical_partition_hh=\\d{2}/",
+            "datasource_name": "athena_sourcing",
+            "asset_name": "zuora_aqua_obj_delta_account_v1",
             "checkpoint": "zuo_checkpoint",
             "suite": "zuo_suite",
-            "engine": "spark"
+            "region_name": "ap-southeast-2",
+            "athena_database": "kayo_temp",
+            "s3_staging_dir": "s3://aws-athena-query-results-294530054210-dev/",
+            "engine": "athena"
         }
     )
 
@@ -36,4 +35,4 @@ def gx_zuo_exec():
     start >> gx_validate >> complete
 
 
-gx_zuo_exec()
+gx_athena_zuo_exec()

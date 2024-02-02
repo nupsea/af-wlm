@@ -1,6 +1,5 @@
 from airflow.models import BaseOperator
-from dags.drafts.gx.gx_report import GxManager
-from great_expectations.core.expectation_configuration import ExpectationConfiguration
+from dags.drafts.gx.gx_manager import GxManager
 
 
 class GxOperator(BaseOperator):
@@ -10,14 +9,19 @@ class GxOperator(BaseOperator):
     def execute(self, context):
 
         gx_manager = GxManager(
-            params=self.params
+            params=self.params,
         )
 
-        data_asset = gx_manager.add_parquet_asset(
-            self.params["asset_name"],
-            self.params["s3_prefix"],
-            self.params["regex"]
-        )
+        if self.params.get("engine") == "athena":
+            data_asset = gx_manager.add_table_asset(
+                self.params["asset_name"]
+            )
+        else:
+            data_asset = gx_manager.add_parquet_asset(
+                self.params["asset_name"],
+                self.params["s3_prefix"],
+                self.params["regex"]
+            )
 
         batches = gx_manager.get_asset_batches(data_asset)
         batch_request_list = [batch.batch_request for batch in batches]
@@ -35,5 +39,4 @@ class GxOperator(BaseOperator):
         print(f"CHECKPOINT Result: \n {checkpoint_result}")
 
         gx_manager.build_data_docs()
-        retrieved_checkpoint = gx_manager.get_checkpoint("zuo_checkpoint")
-        print(f"Retrieved CHECKPOINT: \n {retrieved_checkpoint}")
+

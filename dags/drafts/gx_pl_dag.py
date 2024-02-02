@@ -5,7 +5,7 @@ from great_expectations_provider.operators.great_expectations import (
     GreatExpectationsOperator,
 )
 
-from dags.drafts.gx.GxOperator import GxOperator
+from dags.drafts.gx.gx_operator import GxOperator
 
 MY_GX_DATA_CONTEXT = "include/great_expectations"
 
@@ -37,10 +37,11 @@ def gx_pl_exec():
             "options": {"region": "ap-southeast-2"},
             "asset_name": "player_log",
             "s3_prefix": "ares/vimond/player_log_event/silver/v0_0.0.0_1/meta_physical_partition_valid=valid/meta_physical_partition_date=2020-08-21/",
-            "regex": "meta_physical_partition_hh=\\d{2}/",
-            # "regex": "meta_physical_partition_hh=\\d{2}/.*.parquet",
+            #"regex": "meta_physical_partition_hh=\\d{2}/",
+            "regex": "meta_physical_partition_hh=\\d{2}/.*.parquet",
             "checkpoint": "pl_checkpoint",
-            "suite": "pl_suite"
+            "suite": "pl_suite",
+            "engine": "pandas"
         }
     )
 

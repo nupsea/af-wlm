@@ -1,32 +1,32 @@
-from dags.drafts.gx.gx_report import GxManager
+from dags.drafts.gx.gx_manager import GxManager
 
 
 def main():
     # #  define AWS_PROFILE='m-d-l-dev' in ENV
 
-    # args = {
-    #     "datasource_name": "athena_sourcing",
-    #     "asset_name": "zuora_aqua_obj_delta_account_v1",
-    #     "checkpoint": "zuo_checkpoint",
-    #     "suite": "zuo_suite",
-    #     "region_name": "ap-southeast-2",
-    #     "athena_database": "kayo_temp",
-    #     "s3_staging_dir": "s3://aws-athena-query-results-294530054210-dev/"
-    # }
-
     args = {
         "datasource_name": "athena_sourcing",
-        "asset_name": "ares_vimond_player_log",
-        "checkpoint": "pl_checkpoint",
-        "suite": "pl_suite",
+        "asset_name": "zuora_aqua_obj_delta_account_v1",
+        "checkpoint": "zuo_checkpoint",
+        "suite": "zuo_suite",
         "region_name": "ap-southeast-2",
         "athena_database": "kayo_temp",
         "s3_staging_dir": "s3://aws-athena-query-results-294530054210-dev/"
     }
 
+    # args = {
+    #     "datasource_name": "athena_sourcing",
+    #     "asset_name": "ares_vimond_player_log",
+    #     "checkpoint": "pl_checkpoint",
+    #     "suite": "pl_suite",
+    #     "region_name": "ap-southeast-2",
+    #     "athena_database": "kayo_temp",
+    #     "s3_staging_dir": "s3://aws-athena-query-results-294530054210-dev/",
+    #     "engine": "athena"
+    # }
+
     gx_manager = GxManager(
-        args,
-        engine="athena"
+        args
     )
 
     data_asset = gx_manager.add_table_asset(

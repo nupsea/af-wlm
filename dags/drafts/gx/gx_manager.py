@@ -1,15 +1,26 @@
 import great_expectations as gx
 from great_expectations.datasource.fluent import SQLDatasource
 from pyspark.sql import SparkSession
+import boto3
 
 
 class GxManager:
-    def __init__(self, params, engine="spark"):
+    def __init__(self, params):
         self.params = params or {}
-        self.engine = engine
+        self.engine = params.get("engine", "athena")
 
         self.context = gx.get_context()
         self.datasource = self._setup_datasource()
+
+    def _get_creds(self):
+        profile_name = 'martian-data-lake-dev'
+        session = boto3.Session(profile_name=profile_name)
+        sts_client = session.client('sts')
+        assumed_role = sts_client.assume_role(
+            RoleArn="arn:aws:iam::294530054210:role/group-datalake-powerdev",
+            RoleSessionName="GxSession"
+        )
+        return assumed_role['Credentials']
 
     def _setup_datasource(self):
         datasource_name = self.params["datasource_name"]
@@ -23,11 +34,23 @@ class GxManager:
                 spark_config=self.spark_config
             )
         elif self.engine == "athena":
+
+            # Extract the temp credentials
+            # credentials = self._get_creds()
+
             athena_connection_string = (
                 "awsathena+rest://@athena."
                 f"{self.params['region_name']}.amazonaws.com:443/"
                 f"{self.params['athena_database']}?s3_staging_dir={self.params['s3_staging_dir']}"
             )
+
+            # athena_connection_string = (
+            #     f"awsathena+rest://{credentials['AccessKeyId']}:{credentials['SecretAccessKey']}@"
+            #     f"athena.{self.params['region_name']}.amazonaws.com:443/"
+            #     f"{self.params['athena_database']}?s3_staging_dir=s3://{self.params['s3_staging_dir']}/path/&"
+            #     f"aws_session_token={credentials['SessionToken']}"
+            # )
+
             datasource: SQLDatasource = self.context.sources.add_or_update_sql(
                 datasource_name, connection_string=athena_connection_string
             )

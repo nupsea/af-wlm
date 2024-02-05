@@ -119,13 +119,38 @@ fluent_datasources:
   athena_sourcing:
     type: sql
     assets:
-      zuora_aqua_obj_delta_account_v1:
-        type: table
+      ares_vimond_player_log:
+        type: query
         order_by: []
         batch_metadata: {}
-        table_name: zuora_aqua_obj_delta_account_v1
-        schema_name:
+        query: SELECT * FROM ares_vimond_player_log
     connection_string: awsathena+rest://@athena.ap-southeast-2.amazonaws.com:443/kayo_temp?s3_staging_dir=s3://aws-athena-query-results-294530054210-dev/
+  np_s3_sourcing_binge_vimond:
+    type: spark_s3
+    assets:
+      player_log:
+        type: parquet
+        batching_regex: meta_physical_partition_hh=\d{2}
+        connect_options:
+          s3_prefix: ares/vimond/player_log_event/version=v1/meta_physical_partition_date=2024-02-01/
+          s3_recursive_file_discovery: true
+    spark_config:
+      spark.hadoop.fs.s3a.acl.default: BucketOwnerFullControl
+      spark.hadoop.fs.s3.impl: org.apache.hadoop.fs.s3a.S3AFileSystem
+      fs.s3a.aws.credentials.provider: com.amazonaws.auth.profile.ProfileCredentialsProvider
+      spark.hadoop.hive.metastore.client.factory.class: com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory
+      spark.sql.sources.partitionOverwriteMode: dynamic
+    bucket: kayodatalake-nonprod-sourcing
+  np_athena_sourcing:
+    type: sql
+    assets:
+      zuora_aqua_obj_delta_account_v1:
+        type: query
+        order_by: []
+        batch_metadata: {}
+        query: SELECT * FROM zuora_aqua_obj_delta_account_v1 WHERE meta_physical_partition_date=CAST(current_date
+          - interval '2' day AS VARCHAR)
+    connection_string: awsathena+rest://@athena.ap-southeast-2.amazonaws.com:443/kayo_datalake_source?s3_staging_dir=s3://aws-athena-query-results-711866164579-ap-southeast-2/
 notebooks:
 include_rendered_content:
   globally: false

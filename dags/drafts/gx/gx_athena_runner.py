@@ -1,39 +1,28 @@
 from dags.drafts.gx.gx_manager import GxManager
+import json
+import os
 
 
 def main():
     # #  define AWS_PROFILE='m-d-l-dev' in ENV
+    env = 'dev'
+    source = 'zuora_aqua_obj_delta_account'
+    source = 'ares_vimond_player_log'
+    #  ## ^ To be passed as script arguments ##
 
-    args = {
-        "datasource_name": "athena_sourcing",
-        "asset_name": "zuora_aqua_obj_delta_account_v1",
-        "checkpoint": "zuo_checkpoint",
-        "suite": "zuo_suite",
-        "region_name": "ap-southeast-2",
-        "athena_database": "kayo_temp",
-        "s3_staging_dir": "s3://aws-athena-query-results-294530054210-dev/"
-    }
-
-    # args = {
-    #     "datasource_name": "athena_sourcing",
-    #     "asset_name": "ares_vimond_player_log",
-    #     "checkpoint": "pl_checkpoint",
-    #     "suite": "pl_suite",
-    #     "region_name": "ap-southeast-2",
-    #     "athena_database": "kayo_temp",
-    #     "s3_staging_dir": "s3://aws-athena-query-results-294530054210-dev/",
-    #     "engine": "athena"
-    # }
+    with open(os.path.abspath(f'../../../gx/uncommitted/validation_sources/athena/{env}/{source}.json')) as f:
+        args = json.load(f)
 
     gx_manager = GxManager(
         args
     )
 
-    data_asset = gx_manager.add_table_asset(
-        args["asset_name"]
+    data_asset = gx_manager.add_query_asset(
+        args["asset_name"],
+        args["query"]
     )
 
-    batches = gx_manager.get_asset_batches(data_asset)
+    batches = gx_manager.get_asset_batches(data_asset, options=None)
 
     for batch in batches:
         print(batch.batch_spec)

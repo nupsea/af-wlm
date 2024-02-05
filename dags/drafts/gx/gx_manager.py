@@ -12,15 +12,15 @@ class GxManager:
         self.context = gx.get_context()
         self.datasource = self._setup_datasource()
 
-    def _get_creds(self):
-        profile_name = 'martian-data-lake-dev'
-        session = boto3.Session(profile_name=profile_name)
-        sts_client = session.client('sts')
-        assumed_role = sts_client.assume_role(
-            RoleArn="arn:aws:iam::294530054210:role/group-datalake-powerdev",
-            RoleSessionName="GxSession"
-        )
-        return assumed_role['Credentials']
+    # def _get_creds(self):
+    #     profile_name = '<AWS_PROFILE>'
+    #     session = boto3.Session(profile_name=profile_name)
+    #     sts_client = session.client('sts')
+    #     assumed_role = sts_client.assume_role(
+    #         RoleArn="<YOUR-AWS-RESOURCE-ARN>",
+    #         RoleSessionName="GxSession"
+    #     )
+    #     return assumed_role['Credentials']
 
     def _setup_datasource(self):
         datasource_name = self.params["datasource_name"]
@@ -35,8 +35,8 @@ class GxManager:
             )
         elif self.engine == "athena":
 
-            # Extract the temp credentials
-            # credentials = self._get_creds()
+           # Extract the temp credentials
+           # credentials = self._get_creds()
 
             athena_connection_string = (
                 "awsathena+rest://@athena."
@@ -83,6 +83,9 @@ class GxManager:
     def add_table_asset(self, asset_name):
         return self.datasource.add_table_asset(asset_name, table_name=asset_name)
 
+    def add_query_asset(self, asset_name, query):
+        return self.datasource.add_query_asset(asset_name, query=query)
+
     def add_parquet_asset(self, asset_name, s3_prefix, regex):
         return self.datasource.add_parquet_asset(
             name=asset_name,
@@ -91,8 +94,8 @@ class GxManager:
             s3_recursive_file_discovery=True
         )
 
-    def get_asset_batches(self, asset):
-        batch_request = asset.build_batch_request()
+    def get_asset_batches(self, asset, options=None):
+        batch_request = asset.build_batch_request(options=options)
         return asset.get_batch_list_from_batch_request(batch_request)
 
     def create_or_update_expectation_suite(self, suite_name, expectations):

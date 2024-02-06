@@ -31,12 +31,12 @@ class GxManager:
             datasource = self.context.sources.add_or_update_spark_s3(
                 name=datasource_name,
                 bucket=self.params["bucket_name"],
-                spark_config=self.spark_config
+                spark_config=self.spark_config,
             )
         elif self.engine == "athena":
 
-           # Extract the temp credentials
-           # credentials = self._get_creds()
+            # Extract the temp credentials
+            # credentials = self._get_creds()
 
             athena_connection_string = (
                 "awsathena+rest://@athena."
@@ -56,19 +56,21 @@ class GxManager:
             )
         else:
             datasource = self.context.sources.add_or_update_pandas_s3(
-                name=datasource_name,
-                bucket=self.params["bucket_name"]
+                name=datasource_name, bucket=self.params["bucket_name"]
             )
 
         return datasource
 
     def _setup_spark(self):
         # TODO Refactor
-        self.spark = SparkSession.builder \
-            .appName("GX_Trial") \
-            .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.1,org.apache.kafka:kafka-clients:3.4.0,org.apache.hadoop:hadoop-aws:3.3.3,com.amazonaws:aws-java-sdk-bundle:1.12.397") \
+        self.spark = (
+            SparkSession.builder.appName("GX_Trial")
+            .config(
+                "spark.jars.packages",
+                "org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.1,org.apache.kafka:kafka-clients:3.4.0,org.apache.hadoop:hadoop-aws:3.3.3,com.amazonaws:aws-java-sdk-bundle:1.12.397",
+            )
             .getOrCreate()
-
+        )
 
     @property
     def spark_config(self):
@@ -77,7 +79,7 @@ class GxManager:
             "spark.hadoop.fs.s3.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
             "fs.s3a.aws.credentials.provider": "com.amazonaws.auth.profile.ProfileCredentialsProvider",
             "spark.hadoop.hive.metastore.client.factory.class": "com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory",
-            "spark.sql.sources.partitionOverwriteMode": "dynamic"
+            "spark.sql.sources.partitionOverwriteMode": "dynamic",
         }
 
     def add_table_asset(self, asset_name):
@@ -91,7 +93,7 @@ class GxManager:
             name=asset_name,
             batching_regex=regex,
             s3_prefix=s3_prefix,
-            s3_recursive_file_discovery=True
+            s3_recursive_file_discovery=True,
         )
 
     def get_asset_batches(self, asset, options=None):
@@ -112,7 +114,7 @@ class GxManager:
         checkpoint = self.context.add_or_update_checkpoint(
             name=checkpoint_name,
             validations=validations,
-            run_name_template="%Y%m%dT%H%M%S.%fZ"
+            run_name_template="%Y%m%dT%H%M%S.%fZ",
         )
         return checkpoint.run()
 

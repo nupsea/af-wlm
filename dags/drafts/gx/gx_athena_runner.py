@@ -5,22 +5,21 @@ import os
 
 def main():
     # #  define AWS_PROFILE='m-d-l-dev' in ENV
-    env = 'dev'
-    source = 'zuora_aqua_obj_delta_account'
-    source = 'ares_vimond_player_log'
+    env = "dev"
+    source = "zuora_aqua_obj_delta_account"
+    source = "ares_vimond_player_log"
     #  ## ^ To be passed as script arguments ##
 
-    with open(os.path.abspath(f'../../../gx/uncommitted/validation_sources/athena/{env}/{source}.json')) as f:
+    with open(
+        os.path.abspath(
+            f"../../../gx/uncommitted/validation_sources/athena/{env}/{source}.json"
+        )
+    ) as f:
         args = json.load(f)
 
-    gx_manager = GxManager(
-        args
-    )
+    gx_manager = GxManager(args)
 
-    data_asset = gx_manager.add_query_asset(
-        args["asset_name"],
-        args["query"]
-    )
+    data_asset = gx_manager.add_query_asset(args["asset_name"], args["query"])
 
     batches = gx_manager.get_asset_batches(data_asset, options=None)
 
@@ -41,5 +40,5 @@ def main():
     gx_manager.build_data_docs()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

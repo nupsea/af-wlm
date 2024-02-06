@@ -13,14 +13,12 @@ class GxOperator(BaseOperator):
         )
 
         if self.params.get("engine") == "athena":
-            data_asset = gx_manager.add_table_asset(
-                self.params["asset_name"]
-            )
+            data_asset = gx_manager.add_table_asset(self.params["asset_name"])
         else:
             data_asset = gx_manager.add_parquet_asset(
                 self.params["asset_name"],
                 self.params["s3_prefix"],
-                self.params["regex"]
+                self.params["regex"],
             )
 
         batches = gx_manager.get_asset_batches(data_asset)
@@ -39,4 +37,3 @@ class GxOperator(BaseOperator):
         print(f"CHECKPOINT Result: \n {checkpoint_result}")
 
         gx_manager.build_data_docs()
-

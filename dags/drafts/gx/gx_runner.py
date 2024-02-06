@@ -9,17 +9,17 @@ def main():
     source = "s3_sourcing_binge_vimond"
     engine = "spark"
 
-    with open(os.path.abspath(f'../../../gx/uncommitted/validation_sources/{engine}/{env}/{source}.json')) as f:
+    with open(
+        os.path.abspath(
+            f"../../../gx/uncommitted/validation_sources/{engine}/{env}/{source}.json"
+        )
+    ) as f:
         args = json.load(f)
 
-    gx_manager = GxManager(
-        args
-    )
+    gx_manager = GxManager(args)
 
     data_asset = gx_manager.add_parquet_asset(
-        args["asset_name"],
-        args["s3_prefix"],
-        args["regex"]
+        args["asset_name"], args["s3_prefix"], args["regex"]
     )
 
     batches = gx_manager.get_asset_batches(data_asset)
@@ -41,5 +41,5 @@ def main():
     gx_manager.build_data_docs()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

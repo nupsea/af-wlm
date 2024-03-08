@@ -1,0 +1,58 @@
+{
+  "data_asset_type": null,
+  "expectation_suite_name": "np_zuo_suite",
+  "expectations": [
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "account_currency",
+        "value_set": [
+          "AUD", "USD"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "account_id"
+      },
+      "meta": {
+        "notes": {
+          "content": "Account ID can't be null. **Markdown** `Supported`",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_table_column_count_to_be_between",
+      "kwargs": {
+        "min_value": 40,
+        "max_value": 50
+      },
+      "meta": {
+        "notes": {
+          "content": "Account field count expected to be in range of 40 - 50. **Markdown** `Supported`",
+          "format": "markdown"
+        }
+      }
+    },
+    {
+      "expectation_type": "expect_table_row_count_to_be_between",
+      "kwargs": {
+        "min_value": 2000000,
+        "max_value": 3000000
+      },
+      "meta": {
+        "notes": {
+          "content": "Account daily count expected to be in range of 400M - 600M. **Markdown** `Supported`",
+          "format": "markdown"
+        }
+      }
+    }
+  ],
+  "ge_cloud_id": null,
+  "meta": {
+    "great_expectations_version": "0.18.8"
+  }
+}

@@ -1,0 +1,45 @@
+name: np_pl_checkpoint
+config_version: 1.0
+template_name:
+module_name: great_expectations.checkpoint
+class_name: Checkpoint
+run_name_template: '%Y%m%dT%H%M%S.%fZ'
+expectation_suite_name: np_pl_suite
+batch_request: {}
+action_list:
+  - name: store_validation_result
+    action:
+      class_name: StoreValidationResultAction
+  - name: store_evaluation_params
+    action:
+      class_name: StoreEvaluationParametersAction
+  - name: update_data_docs
+    action:
+      class_name: UpdateDataDocsAction
+evaluation_parameters: {}
+runtime_configuration: {}
+validations:
+  - batch_request:
+      datasource_name: np_s3_sourcing_binge_vimond
+      data_asset_name: player_log
+      options:
+        path: ares/vimond/player_log_event/version=v1/meta_physical_partition_date=2024-02-01/meta_physical_partition_hh=02
+      batch_slice:
+    expectation_suite_name: np_pl_suite
+  - batch_request:
+      datasource_name: np_s3_sourcing_binge_vimond
+      data_asset_name: player_log
+      options:
+        path: ares/vimond/player_log_event/version=v1/meta_physical_partition_date=2024-02-01/meta_physical_partition_hh=05
+      batch_slice:
+    expectation_suite_name: np_pl_suite
+  - batch_request:
+      datasource_name: np_s3_sourcing_binge_vimond
+      data_asset_name: player_log
+      options:
+        path: ares/vimond/player_log_event/version=v1/meta_physical_partition_date=2024-02-01/meta_physical_partition_hh=06
+      batch_slice:
+    expectation_suite_name: np_pl_suite
+profilers: []
+ge_cloud_id:
+expectation_suite_ge_cloud_id:

@@ -2,15 +2,26 @@ import great_expectations as gx
 from great_expectations.datasource.fluent import SQLDatasource
 from pyspark.sql import SparkSession
 import boto3
+import os
+import json
+from great_expectations.data_context import EphemeralDataContext
 
 
 class GxManager:
-    def __init__(self, params):
-        self.params = params or {}
-        self.engine = params.get("engine", "athena")
+    def __init__(self, env, source, engine="athena"):
+        self.env = env
+        self.source = source
+        self.engine = engine
+        self.context = gx.get_context(
+                                      # context_root_dir="/Users/anup.sethuram/DEV/LM/NSea/af-271/gx/"
+        )
+        # print(f" $$$ Context: {self.context} ")
+        # self.context = self.context.convert_to_file_context()
 
-        self.context = gx.get_context()
         self.datasource = self._setup_datasource()
+
+        if isinstance(self.context, EphemeralDataContext):
+            print(" ----- It's Ephemeral! -------- ")
 
     # def _get_creds(self):
     #     profile_name = '<AWS_PROFILE>'
@@ -22,7 +33,28 @@ class GxManager:
     #     )
     #     return assumed_role['Credentials']
 
+    @property
+    def params(self):
+        with open(
+                os.path.abspath(
+                    f"gx/uncommitted/validation_sources/{self.engine}/{self.env}/{self.source}.json"
+                )
+        ) as f:
+            return json.load(f)
+
+    @property
+    def conf(self):
+        with open(
+                os.path.abspath(
+                    f"gx/uncommitted/validation_sources/{self.engine}/{self.env}/conf.json"
+                )
+        ) as f:
+            return json.load(f)
+
     def _setup_datasource(self):
+        print(f" *** Params: {self.params}")
+        print(f" *** Conf: {self.conf}")
+
         datasource_name = self.params["datasource_name"]
 
         if self.engine == "spark":
@@ -40,8 +72,8 @@ class GxManager:
 
             athena_connection_string = (
                 "awsathena+rest://@athena."
-                f"{self.params['region_name']}.amazonaws.com:443/"
-                f"{self.params['athena_database']}?s3_staging_dir={self.params['s3_staging_dir']}"
+                f"{self.conf['region_name']}.amazonaws.com:443/"
+                f"{self.params['athena_database']}?s3_staging_dir={self.conf['s3_staging_dir']}"
             )
 
             # athena_connection_string = (
@@ -96,11 +128,18 @@ class GxManager:
             s3_recursive_file_discovery=True,
         )
 
+    def add_asset(self):
+        if self.engine == "athena":
+            return self.add_query_asset(self.params["asset_name"], self.params["query"])
+        else:
+            raise Exception(f"Op not supported for engine: {self.engine}")
+
     def get_asset_batches(self, asset, options=None):
         batch_request = asset.build_batch_request(options=options)
         return asset.get_batch_list_from_batch_request(batch_request)
 
     def create_or_update_expectation_suite(self, suite_name, expectations):
+        print(f" *** Suite Name: {suite_name}")
         suite = self.context.get_expectation_suite(suite_name)
         for expectation in expectations:
             suite.add_expectation(expectation)
@@ -110,10 +149,11 @@ class GxManager:
     #     checkpoint = self.get_checkpoint(checkpoint_name)
     #     return checkpoint.run()
 
-    def run_checkpoint(self, checkpoint_name, validations):
+    def run_checkpoint(self, checkpoint_name, validations, suite_name):
         checkpoint = self.context.add_or_update_checkpoint(
             name=checkpoint_name,
             validations=validations,
+            # expectation_suite_name=suite_name,
             run_name_template="%Y%m%dT%H%M%S.%fZ",
         )
         return checkpoint.run()
@@ -124,3 +164,31 @@ class GxManager:
 
     def get_checkpoint(self, checkpoint_name):
         return self.context.get_checkpoint(name=checkpoint_name)
+
+    def exec(self):
+
+        # my_asset = self.context.get_datasource(self.params["datasource_name"]).get_asset(self.params["asset_name"])
+
+        data_asset = self.add_asset()
+
+        batches = self.get_asset_batches(data_asset, options=None)
+
+        # self.context.add_or_update_expectation_suite(self.params["suite"])
+
+        for batch in batches:
+            print(batch.batch_spec)
+
+        batch_request_list = [batch.batch_request for batch in batches]
+        print(batch_request_list)
+
+        validations = [
+            {"batch_request": br, "expectation_suite_name": self.params["suite"]}
+            for br in batch_request_list
+        ]
+
+        print(f"Validations: {validations}")
+
+        checkpoint_result = self.run_checkpoint(self.params["checkpoint"], validations, self.params["suite"])
+        print(f"CHECKPOINT Result: \n {checkpoint_result}")
+
+

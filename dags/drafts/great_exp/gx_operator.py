@@ -1,5 +1,5 @@
 from airflow.models import BaseOperator
-from dags.drafts.gx.gx_manager import GxManager
+from dags.drafts.great_exp.gx_manager import GxManager
 
 
 class GxOperator(BaseOperator):
@@ -9,7 +9,9 @@ class GxOperator(BaseOperator):
     def execute(self, context):
 
         gx_manager = GxManager(
-            params=self.params,
+            env=self.params["env"],
+            source=self.params["source"],
+            engine=self.params.get("engine", "athena")
         )
 
         if self.params.get("engine") == "athena":

@@ -2,7 +2,7 @@
 apache-airflow-providers-amazon
 apache-airflow[cncf.kubernetes]
 pendulum~=2.1.2
-great_expectations==0.18.8
+great_expectations==0.18.9
 airflow-provider-great-expectations==0.2.8
-pyspark==3.3.1
+# pyspark==3.3.1
 PyAthena==3.3.0

@@ -11,31 +11,10 @@ class GxOperator(BaseOperator):
         gx_manager = GxManager(
             env=self.params["env"],
             source=self.params["source"],
-            engine=self.params.get("engine", "athena")
+            engine=self.params.get("engine", "athena"),
+            conf=self.params,
+            params=self.params
         )
-
-        if self.params.get("engine") == "athena":
-            data_asset = gx_manager.add_table_asset(self.params["asset_name"])
-        else:
-            data_asset = gx_manager.add_parquet_asset(
-                self.params["asset_name"],
-                self.params["s3_prefix"],
-                self.params["regex"],
-            )
-
-        batches = gx_manager.get_asset_batches(data_asset)
-        batch_request_list = [batch.batch_request for batch in batches]
-        print(batch_request_list)
-
-        validations = [
-            {"batch_request": br, "expectation_suite_name": self.params["suite"]}
-            for br in batch_request_list
-        ]
-
-        for batch in batches:
-            print(batch.batch_spec)
-
-        checkpoint_result = gx_manager.run_checkpoint("zuo_checkpoint", validations)
-        print(f"CHECKPOINT Result: \n {checkpoint_result}")
-
+        gx_manager.exec()
         gx_manager.build_data_docs()
+

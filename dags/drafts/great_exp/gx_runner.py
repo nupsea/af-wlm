@@ -5,9 +5,9 @@ import json
 
 def main():
 
-    env = "nonprod"
+    env = "dev"
     source = "s3_sourcing_binge_vimond"
-    engine = "spark"
+    engine = "pandas"
 
     with open(
         os.path.abspath(
@@ -36,7 +36,7 @@ def main():
         for br in batch_request_list
     ]
 
-    checkpoint_result = gx_manager.run_checkpoint(args["checkpoint"], validations, args["suite"])
+    checkpoint_result = gx_manager.update_and_run_checkpoint(args["checkpoint"], validations, args["suite"])
     print(f"CHECKPOINT Result: \n {checkpoint_result}")
 
     gx_manager.build_data_docs()

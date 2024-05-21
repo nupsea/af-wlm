@@ -7,7 +7,8 @@
       "kwargs": {
         "column": "account_currency",
         "value_set": [
-          "AUD", "USD"
+          "AUD",
+          "USD"
         ]
       },
       "meta": {}
@@ -27,8 +28,8 @@
     {
       "expectation_type": "expect_table_column_count_to_be_between",
       "kwargs": {
-        "min_value": 40,
-        "max_value": 50
+        "max_value": 50,
+        "min_value": 40
       },
       "meta": {
         "notes": {
@@ -40,8 +41,8 @@
     {
       "expectation_type": "expect_table_row_count_to_be_between",
       "kwargs": {
-        "min_value": 2000000,
-        "max_value": 3000000
+        "max_value": 3000000,
+        "min_value": 2000000
       },
       "meta": {
         "notes": {

@@ -1,5 +1,11 @@
+from datetime import datetime
+
 import great_expectations as gx
-from great_expectations.data_context.types.base import DataContextConfig, InMemoryStoreBackendDefaults
+from great_expectations.core import ExpectationSuiteValidationResult, RunIdentifier
+from great_expectations.core.batch import BatchRequest
+from great_expectations.data_context.types.base import DataContextConfig, InMemoryStoreBackendDefaults, \
+    CheckpointValidationConfig
+from great_expectations.data_context.types.resource_identifiers import ExpectationSuiteIdentifier
 from great_expectations.datasource.fluent import SQLDatasource
 
 import boto3
@@ -29,7 +35,6 @@ def temp_env_variable(key, value):
         else:
             # Otherwise, restore the original value
             os.environ[key] = original_value
-
 
 
 class GxManager:
@@ -128,6 +133,14 @@ class GxManager:
         ) as f:
             return json.load(f)
 
+    def _read_suite(self):
+        with open(
+                os.path.abspath(
+                    f"gx/expectations/{self.params.get('suite')}.json"
+                )
+        ) as f:
+            return json.load(f)
+
     def _setup_datasource(self):
         print(f" *** Params: {self.params}")
         print(f" *** Conf: {self.conf}")
@@ -210,6 +223,9 @@ class GxManager:
     def add_asset(self):
         if self.engine == "athena":
             return self.add_query_asset(self.params["asset_name"], self.params["query"])
+        elif self.engine == "pandas":
+            return self.add_parquet_asset(self.params["asset_name"], self.params["s3_prefix"],
+                                          self.params.get("regex", ""))
         else:
             raise Exception(f"Op not supported for engine: {self.engine}")
 
@@ -224,11 +240,11 @@ class GxManager:
             suite.add_expectation(expectation)
         self.context.add_or_update_expectation_suite(expectation_suite=suite)
 
-    # def run_checkpoint(self, checkpoint_name):
+    # def update_and_run_checkpoint(self, checkpoint_name):
     #     checkpoint = self.get_checkpoint(checkpoint_name)
     #     return checkpoint.run()
 
-    def run_checkpoint(self, checkpoint_name, validations, suite_name):
+    def update_and_run_checkpoint(self, checkpoint_name, validations, suite_name):
         checkpoint = self.context.add_or_update_checkpoint(
             name=checkpoint_name,
             validations=validations,
@@ -244,14 +260,43 @@ class GxManager:
     def get_checkpoint(self, checkpoint_name):
         return self.context.get_checkpoint(name=checkpoint_name)
 
+    # def exec(self):
+    #
+    #     self.context = self.context.convert_to_file_context()
+    #     data_asset = self.add_asset()
+    #     suite_dict = self._read_suite()
+    #
+    #     # Add an Expectation Suite
+    #     self.context.add_or_update_expectation_suite(
+    #         expectation_suite_name=self.params["suite"],
+    #         expectations=suite_dict['expectations']
+    #     )
+    #
+    #     batches = self.get_asset_batches(data_asset, options=None)
+    #
+    #     for batch in batches:
+    #         print(f"Batch spec: {batch.batch_spec}")
+    #
+    #     batch_request_list = [batch.batch_request for batch in batches]
+    #     print(batch_request_list)
+    #
+    #     validations = []
+    #     for (i, br) in enumerate(batch_request_list):
+    #         validations.append(
+    #             CheckpointValidationConfig(
+    #                 id=i,
+    #                 expectation_suite_name=self.params["suite"],
+    #                 batch_request=br
+    #             ))
+    #     print(f"Validations: {validations}")
+    #
+    #     checkpoint_result = self.update_and_run_checkpoint(self.params["checkpoint"], validations, self.params["suite"])
+    #     print(f"CHECKPOINT Result: \n {checkpoint_result}")
+
     def exec(self):
-
         self.context = self.context.convert_to_file_context()
-
         data_asset = self.add_asset()
-
-        with open("/Users/anup.sethuram/np_zuo_suite.json", "r") as f:
-            suite_dict = json.load(f)
+        suite_dict = self._read_suite()
 
         # Add an Expectation Suite
         self.context.add_or_update_expectation_suite(
@@ -259,22 +304,75 @@ class GxManager:
             expectations=suite_dict['expectations']
         )
 
+        # Get batches
         batches = self.get_asset_batches(data_asset, options=None)
 
-        for batch in batches:
-            print(batch.batch_spec)
+        # Iterate over each batch and run the checkpoint separately
+        for i, batch in enumerate(batches):
+            batch_request = batch.batch_request
+            validations = [
+                {
+                    "batch_request": batch_request,
+                    "expectation_suite_name": self.params["suite"],
+                }
+            ]
 
-        batch_request_list = [batch.batch_request for batch in batches]
-        print(batch_request_list)
+            # Create a checkpoint config
+            checkpoint_config = {
+                "name": f"{self.params['checkpoint']}_{batch.id}_{i}",
+                "config_version": 1.0,
+                "class_name": "Checkpoint",
+                "run_name_template": f"%Y%m%d-%H%M%S",
+                "validations": validations,
+                "action_list": [
+                    {
+                        "name": "store_validation_result",
+                        "action": {
+                            "class_name": "StoreValidationResultAction"
+                        }
+                    },
+                    {
+                        "name": "store_evaluation_params",
+                        "action": {
+                            "class_name": "StoreEvaluationParametersAction"
+                        }
+                    },
+                    {
+                        "name": "update_data_docs",
+                        "action": {
+                            "class_name": "UpdateDataDocsAction"
+                        }
+                    }
+                ]
+            }
 
-        validations = [
-            {"batch_request": br, "expectation_suite_name": self.params["suite"]}
-            for br in batch_request_list
-        ]
+            # Create or update the checkpoint
+            self.context.add_or_update_checkpoint(**checkpoint_config)
 
-        print(f"Validations: {validations}")
+            if self.engine == "pandas":
+                run_name = f'File_{i+1}_{os.path.basename(batch.batch_spec["path"])}'
+            else:
+                run_name = f'{self.engine}_Run_{i+1}'
 
-        checkpoint_result = self.run_checkpoint(self.params["checkpoint"], validations, self.params["suite"])
-        print(f"CHECKPOINT Result: \n {checkpoint_result}")
+            # Run checkpoint with the current batch validation
+            checkpoint_result = self.context.run_checkpoint(
+                checkpoint_name=f"{self.params['checkpoint']}_{batch.id}_{i}",
+                run_name=run_name
+            )
+            print(f"CHECKPOINT Result for batch {batch.id}: \n {checkpoint_result}")
 
+            # results = json.loads(checkpoint_result["run_results"]["validation_result"]["results"])
+            # for result in results:
+            #     if not result.get("success", False):
+            #         raise RuntimeError(f" GX Error:\n {result['exception_info']['exception_message']}")
+
+            first_key = next(iter(checkpoint_result['run_results']))
+            results = checkpoint_result['run_results'][first_key]['validation_result']['results']
+            for result in results:
+                if result['exception_info'].get("raised_exception"):
+                    raise RuntimeError(f" GX Error =>\n\t{result['exception_info']['exception_message']}")
+
+        # Build and open data docs
+        self.context.build_data_docs()
+        self.context.open_data_docs()
 

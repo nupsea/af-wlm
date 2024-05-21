@@ -23,6 +23,19 @@
           "format": "markdown"
         }
       }
+    },
+    {
+      "expectation_type": "expect_table_row_count_to_be_between",
+      "kwargs": {
+        "max_value": 3000,
+        "min_value": 20
+      },
+      "meta": {
+        "notes": {
+          "content": "Vimond daily count unexpected. **Markdown** `Supported`",
+          "format": "markdown"
+        }
+      }
     }
   ],
   "ge_cloud_id": null,

@@ -1,4 +1,15 @@
 fluent_datasources:
+  np_athena_sourcing:
+    type: sql
+    assets:
+      zuora_aqua_obj_delta_account_v1:
+        type: query
+        order_by: []
+        batch_metadata: {}
+        query: SELECT * FROM zuora_aqua_obj_delta_account_v1 WHERE meta_physical_partition_date
+          = substr(CAST(date_trunc('day', CAST('2024-04-16 22:33:32' AS timestamp))
+          AS varchar), 1, 10)
+    connection_string: awsathena+rest://@athena.ap-southeast-2.amazonaws.com:443/kayo_datalake_source?s3_staging_dir=s3://aws-athena-query-results-711866164579-ap-southeast-2/
   s3_sourcing_binge_vimond:
     type: pandas_s3
     assets:
@@ -50,16 +61,6 @@ fluent_datasources:
       spark.hadoop.hive.metastore.client.factory.class: com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory
       spark.sql.sources.partitionOverwriteMode: dynamic
     bucket: kayodatalake-nonprod-sourcing
-  np_athena_sourcing:
-    type: sql
-    assets:
-      zuora_aqua_obj_delta_account_v1:
-        type: query
-        order_by: []
-        batch_metadata: {}
-        query: SELECT * FROM zuora_aqua_obj_delta_account_v1 WHERE meta_physical_partition_date=CAST(current_date
-          - interval '2' day AS VARCHAR)
-    connection_string: awsathena+rest://@athena.ap-southeast-2.amazonaws.com:443/kayo_datalake_source?s3_staging_dir=s3://aws-athena-query-results-711866164579-ap-southeast-2/
 config_version: 3.0
 datasources:
   pandas_datasource:
@@ -106,18 +107,14 @@ stores:
       class_name: InMemoryStoreBackend
 notebooks:
 data_docs_sites:
-  # Data Docs make it simple to visualize data quality in your project. These
-  # include Expectations, Validations & Profiles. The are built for all
-  # Datasources from JSON artifacts in the local repo including validations &
-  # profiles from the uncommitted directory. Read more at https://docs.greatexpectations.io/docs/terms/data_docs
-  local_site:
+  default_site:
     class_name: SiteBuilder
-    show_how_to_buttons: true
     store_backend:
       class_name: TupleFilesystemStoreBackend
-      base_directory: uncommitted/data_docs/local_site/
+      base_directory: uncommitted/data_docs/default_site
     site_index_builder:
       class_name: DefaultSiteIndexBuilder
+      show_cta_footer: true
 config_variables_file_path:
 anonymous_usage_statistics:
   data_context_id: dab99caf-13a3-44e0-b412-f9d3b3a30110

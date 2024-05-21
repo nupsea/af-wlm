@@ -3,7 +3,7 @@ config_version: 1.0
 template_name:
 module_name: great_expectations.checkpoint
 class_name: Checkpoint
-run_name_template: '%Y%m%dT%H%M%S.%fZ'
+run_name_template: '%Y%m%d-%H%M%S'
 expectation_suite_name:
 batch_request: {}
 action_list:
@@ -20,9 +20,24 @@ evaluation_parameters: {}
 runtime_configuration: {}
 validations:
   - batch_request:
-      datasource_name: athena_sourcing
-      data_asset_name: ares_vimond_player_log
-      options: {}
+      datasource_name: s3_sourcing_binge_vimond
+      data_asset_name: player_log
+      options:
+        path: ares/vimond/player_log_event/silver/v0_0.0.0_1/meta_physical_partition_valid=valid/meta_physical_partition_date=2020-08-21/meta_physical_partition_hh=00/part-00000-779a3751-97e0-4317-b5dc-57f49b95fa0d.c000.snappy.parquet
+      batch_slice:
+    expectation_suite_name: pl_suite
+  - batch_request:
+      datasource_name: s3_sourcing_binge_vimond
+      data_asset_name: player_log
+      options:
+        path: ares/vimond/player_log_event/silver/v0_0.0.0_1/meta_physical_partition_valid=valid/meta_physical_partition_date=2020-08-21/meta_physical_partition_hh=01/part-00000-d15d302b-ce00-43b4-a8ba-add69417d4be.c000.snappy.parquet
+      batch_slice:
+    expectation_suite_name: pl_suite
+  - batch_request:
+      datasource_name: s3_sourcing_binge_vimond
+      data_asset_name: player_log
+      options:
+        path: ares/vimond/player_log_event/silver/v0_0.0.0_1/meta_physical_partition_valid=valid/meta_physical_partition_date=2020-08-21/meta_physical_partition_hh=02/part-00000-8d0b7ccc-808e-451a-b687-19de9a466a35.c000.snappy.parquet
       batch_slice:
     expectation_suite_name: pl_suite
 profilers: []
